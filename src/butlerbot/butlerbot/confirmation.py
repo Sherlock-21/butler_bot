@@ -53,7 +53,7 @@ class Confirmation(Node):
     
     def cancel_order(self, request, response):
         """Order Cancellation Request"""
-        confirmation = self.get_confirmation("\nPRESS 1 To CANCEL the ORDER: ",8)
+        confirmation = self.get_confirmation("\nPRESS 1 To CANCEL the ORDER: ",6)
         if confirmation == 1:
             response.success = True
             response.message = "ORDER CANCELLED"
@@ -70,7 +70,7 @@ class Confirmation(Node):
 
         # Set the signal handler for SIGALRM
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(timeout)  # Set a 5-second timer
+        signal.alarm(timeout)  
 
         try:
             # Get user input
@@ -82,7 +82,7 @@ class Confirmation(Node):
             print()
             confirmation = 0
         finally:
-            # Disable the alarm
+
             signal.alarm(0)
 
         return confirmation

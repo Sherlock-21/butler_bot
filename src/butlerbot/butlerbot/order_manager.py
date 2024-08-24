@@ -14,10 +14,7 @@ class OrderManager(Node):
         # Publisher for the list of order numbers
         self.order_publisher = self.create_publisher(Int32MultiArray, 'order_queue', 10)
 
-        # Subscriber to receive order completion confirmation
-        self.order_completion_subscriber = self.create_subscription(
-            Int32, 'order_completion', self.order_completed_callback, 10)
-
+      
         
 
     def add_order(self, order_number):
@@ -46,13 +43,6 @@ class OrderManager(Node):
         order_msg = Int32MultiArray(data=comorder)
         self.order_publisher.publish(order_msg)
 
-    def order_completed_callback(self, msg):
-        """Callback function to process order completion."""
-        completed_order_number = msg.data
-        print(f'Order completed: {completed_order_number}')
-
-        # Remove the completed order from the queue
-        self.remove_order(completed_order_number)
 
 
 def main(args=None):
@@ -60,6 +50,7 @@ def main(args=None):
     order_manager = OrderManager()
 
     while rclpy.ok():
+        rclpy.spin_once(order_manager, timeout_sec=0.1)
         # Get the order action from the user
         user_input = input("Enter 'a<number1> <number2> ...' to add or 'r<number1> <number2> ...' to remove orders: ")
 
@@ -78,9 +69,10 @@ def main(args=None):
                 print(f"Invalid command '{command}'. Please enter 'a<number>' to add or 'r<number>' to remove an order.")
 
         order_manager.publish_order_queue()
+        order_manager.orders = []
 
-        # Process callbacks
-        rclpy.spin_once(order_manager, timeout_sec=0.1)
+        
+        
 
     # Clean up
     order_manager.destroy_node()

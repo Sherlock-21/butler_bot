@@ -29,9 +29,6 @@ class RobotController(Node):
         
         self.table_service_client = self.create_client(SetBool, 'table_confirmation_service',callback_group=self.callback_group_3)
 
-        # Publisher to confirm order completion
-        self.order_completion_publisher = self.create_publisher(Int32, 'order_completion', 10)
-
         self.order_cancel = self.create_client(SetBool, 'cancel_order',callback_group=self.callback_group_4)
 
         while not self.kitchen_service_client.wait_for_service(timeout_sec=1.0):
@@ -46,6 +43,7 @@ class RobotController(Node):
         self.kitchen_confirmed = 0
         self.table_confirmed = 0
         self.order_completed = False
+        self.ret_kitch = 0
 
     def order_callback(self, msg1):
         """Callback function for receiving order numbers."""
@@ -54,47 +52,67 @@ class RobotController(Node):
             return
 
         # Process each order in the queue
-        for order_number in msg1.data:
-            print(f'\n Received order number: {order_number}')
-            self.process_order(order_number)
+        number_of_order = len(msg1.data)
+        if number_of_order==1:
+            for order_number in msg1.data:
+                print(f'\n Received order number: {order_number}')
+                self.process_order([msg1.data[0]])
+        else:
+            print(f'\n Received group order : {msg1.data}')
+            self.process_order(list(msg1.data))
 
-    def process_order(self, order_number):
+    def process_order(self, order_numbers):
         """Simulate robot movement for a given order."""
-        self.current_order = order_number
+        
         self.kitchen_confirmed = 0
         self.table_confirmed = 0
 
         # Simulate movement to kitchen
 
-
-
+        
+     
         self.simulate_movement('\n\tMoving to Kitchen... -->')
-        if self.order_cancellation():
-
-            if self.request_kitchen_confirmation():
-
-                self.simulate_movement(f'\n\tMoving to Table {order_number}... -->')
-
-                if self.order_cancellation():
-                    if self.request_table_confirmation(order_number):
-                        self.simulate_movement('\tMoving back to Home State... -->')
-                        print(f'\n Order {order_number} processed SUCCESSFULLY!')
-
-                    else:
-                        self.simulate_movement('\n\tReturning to Kitchen... -->')
-                        self.simulate_movement('\n\tReturning to Home State... -->')
-                else:
-                    self.simulate_movement('\n\tReturning to Kitchen... -->')
-                    self.simulate_movement('\n\tReturning to Home State... -->')
-
-            else:
-                self.simulate_movement('\n\tMoving back to Home State... -->')
-
+        if not self.order_cancellation() or not self.request_kitchen_confirmation() :
+            print()          
+        
+        
         else:
-                self.simulate_movement('\n\tMoving back to Home State... -->')
+                
+        
+
+        
+
+            for order_number in order_numbers:
+                
+                self.process_single_order(order_number)
+            
+            if self.ret_kitch==1:
+                self.simulate_movement('\n\tMoving back to Kitchen... -->')
+                    
+
+
+        
+        self.simulate_movement('\n\tReturning to Home State... -->')
+        
+            
              
         
-        self.order_completion_publisher.publish(Int32(data=order_number))
+        
+    def process_single_order(self, order_number):
+        """Simulate robot movement for a order."""
+        
+        
+        self.simulate_movement(f'\n\tMoving to Table {order_number}... -->')
+        
+        if not self.order_cancellation() or not self.request_table_confirmation(order_number):
+            self.ret_kitch = 1
+            return
+
+        
+        print(f'\n Order {order_number} processed SUCCESSFULLY!')
+                
+        return 
+            
 
 
 
@@ -102,7 +120,7 @@ class RobotController(Node):
         """Simulate the movement by typing out the message character by character."""
         for char in message:
             print(char, end='', flush=True)
-            time.sleep(0.15)
+            time.sleep(0.1)
         print() 
 
 
@@ -118,7 +136,7 @@ class RobotController(Node):
         future = self.order_cancel.call_async(request)
 
         # Wait for the service response with a timeout
-        timeout_sec = 7.0
+        timeout_sec = 5.0
         rclpy.spin_until_future_complete(self, future, timeout_sec=timeout_sec)
 
 
@@ -145,7 +163,7 @@ class RobotController(Node):
 
     def request_kitchen_confirmation(self):
         """Request confirmation from the kitchen via a service call."""
-        print(' Requesting confirmation from Kitchen...')
+        print(' \nRequesting confirmation from Kitchen...')
 
         # Create a request object
         request = SetBool.Request()
@@ -179,7 +197,7 @@ class RobotController(Node):
 
     def request_table_confirmation(self,order_number):
         """Request confirmation from the table via a service call."""
-        print(' Requesting confirmation from Table...')
+        print(f'\n Requesting confirmation from Table {order_number}')
 
         # Create a request object
         req = SetBool.Request()
