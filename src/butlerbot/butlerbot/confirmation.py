@@ -1,13 +1,11 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32
-from rclpy.qos import QoSProfile, ReliabilityPolicy
 from std_srvs.srv import SetBool
 import signal
 
 class Confirmation(Node):
     def __init__(self):
-        super().__init__('confirmation')
+        super().__init__('confirmation')          #Node Initialization
         self.get_logger().info('Confirmation Node is up and running!')
 
         # Service for kitchen confirmation
@@ -21,6 +19,7 @@ class Confirmation(Node):
 
     def handle_kitchen_confirmation(self, request, response):
         """Handle the kitchen confirmation request."""
+
         print('\nReceived request for KITCHEN confirmation.')
 
         confirmation = self.get_confirmation("\nKITCHEN : Confirm the order (1 or 0): ",11)
@@ -70,7 +69,7 @@ class Confirmation(Node):
 
         # Set the signal handler for SIGALRM
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(timeout)  
+        signal.alarm(timeout)  #timeout for response input
 
         try:
             # Get user input

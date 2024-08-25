@@ -1,43 +1,31 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32MultiArray, Int32
+from std_msgs.msg import Int32MultiArray
 
 
 class OrderManager(Node):
     def __init__(self):
-        super().__init__('order_manager')
+        super().__init__('order_manager')    #Node Initialization
         self.get_logger().info('Order Manager Node is up and running!')
 
         # Placeholder for orders list
-        self.orders = []
+        self.orders = []          #order_queue varialbe
 
         # Publisher for the list of order numbers
-        self.order_publisher = self.create_publisher(Int32MultiArray, 'order_queue', 10)
+        self.order_publisher = self.create_publisher(Int32MultiArray, 'order_queue', 10) # pub creation
 
       
         
 
-    def add_order(self, order_number):
+    def add_order(self, order_number):      #function for adding order
         """Function to add a new order."""
         order = f'Order {order_number}'
         self.orders.append(order)
         print(f'\t\t\tNew order added: {order}')
 
-        # Publish the updated order list
-        
+       
 
-    def remove_order(self, order_number):
-        """Function to remove an order."""
-        order_to_remove = f'Order {order_number}'
-        if order_to_remove in self.orders:
-            self.orders.remove(order_to_remove)
-            print(f'\t\t\tOrder removed: {order_to_remove}')
-            # Publish the updated order list
-            
-        else:
-            self.get_logger().info(f'\t\tOrder {order_number} not found in queue.')
-
-    def publish_order_queue(self):
+    def publish_order_queue(self):     # publish order_queue
         """Publish the current order queue."""
         comorder=[int(order.split(' ')[-1]) for order in self.orders]
         order_msg = Int32MultiArray(data=comorder)
@@ -52,7 +40,7 @@ def main(args=None):
     while rclpy.ok():
         rclpy.spin_once(order_manager, timeout_sec=0.1)
         # Get the order action from the user
-        user_input = input("Enter 'a<number1> <number2> ...' to add or 'r<number1> <number2> ...' to remove orders: ")
+        user_input = input("Enter 'a<number1> <number2> ...' to add orders: ")
 
         # Split the input into individual commands
         commands = user_input.split()
@@ -69,7 +57,7 @@ def main(args=None):
                 print(f"Invalid command '{command}'. Please enter 'a<number>' to add or 'r<number>' to remove an order.")
 
         order_manager.publish_order_queue()
-        order_manager.orders = []
+        order_manager.orders = []   # resetting order_queue
 
         
         

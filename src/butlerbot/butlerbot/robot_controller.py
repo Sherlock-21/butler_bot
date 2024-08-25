@@ -1,36 +1,36 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int32, Int32MultiArray
+from std_msgs.msg import Int32MultiArray
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
-from rclpy.qos import QoSProfile, ReliabilityPolicy
 from std_srvs.srv import SetBool
 import time
 
 class RobotController(Node):
     def __init__(self):
-        super().__init__('robot_controller')
+        super().__init__('robot_controller')      #Node Initialization
         print('Robot Controller Node is up and running!')
-        self.callback_group_1=MutuallyExclusiveCallbackGroup()
+        self.callback_group_1=MutuallyExclusiveCallbackGroup()   #creating callback groups
         self.callback_group_2=MutuallyExclusiveCallbackGroup()
         self.callback_group_3=MutuallyExclusiveCallbackGroup()
         self.callback_group_4=MutuallyExclusiveCallbackGroup()
 
         # Subscribe to the order queue topic
-        self.subscription = self.create_subscription(
+        self.subscription = self.create_subscription(      #subscriber creation
             Int32MultiArray,
             'order_queue',
             self.order_callback,
             10,
             callback_group=self.callback_group_1
         )
-
+          #client creation
         self.kitchen_service_client = self.create_client(SetBool, 'kitchen_confirmation_service',callback_group=self.callback_group_2)
         
         self.table_service_client = self.create_client(SetBool, 'table_confirmation_service',callback_group=self.callback_group_3)
 
         self.order_cancel = self.create_client(SetBool, 'cancel_order',callback_group=self.callback_group_4)
 
+       #Wait for service connection
         while not self.kitchen_service_client.wait_for_service(timeout_sec=1.0):
             print('Service not available, waiting...')
         
@@ -60,6 +60,10 @@ class RobotController(Node):
         else:
             print(f'\n Received group order : {msg1.data}')
             self.process_order(list(msg1.data))
+
+        
+
+        
 
     def process_order(self, order_numbers):
         """Simulate robot movement for a given order."""
@@ -98,7 +102,7 @@ class RobotController(Node):
              
         
         
-    def process_single_order(self, order_number):
+    def process_single_order(self, order_number):   #processing orders after reaching kitchen 
         """Simulate robot movement for a order."""
         
         
@@ -125,7 +129,7 @@ class RobotController(Node):
 
 
 
-    def order_cancellation(self):
+    def order_cancellation(self):      #cancellation client function for getting response from confirmation.py node
         """Cancellation time period"""
 
         # Create a request object
@@ -161,9 +165,9 @@ class RobotController(Node):
         
 
 
-    def request_kitchen_confirmation(self):
+    def request_kitchen_confirmation(self):   #kitchen confirmation client function for getting response from confirmation.py node
         """Request confirmation from the kitchen via a service call."""
-        print(' \nRequesting confirmation from Kitchen...')
+        print('\n Requesting confirmation from Kitchen...')
 
         # Create a request object
         request = SetBool.Request()
@@ -195,7 +199,7 @@ class RobotController(Node):
             print('\n\t\t No one attended the robot - Kitchen confirmation timed out!')
             return False
 
-    def request_table_confirmation(self,order_number):
+    def request_table_confirmation(self,order_number): #Table confirmation client function for getting response from confirmation.py node
         """Request confirmation from the table via a service call."""
         print(f'\n Requesting confirmation from Table {order_number}')
 
@@ -232,12 +236,11 @@ class RobotController(Node):
 def main(args=None):
     rclpy.init(args=args)
     robot_controller = RobotController()
-    executor = MultiThreadedExecutor(5)
+    executor = MultiThreadedExecutor(5) #creating a multithreaded executor
     executor.add_node(robot_controller)
 
     try:
-        while 1 :
-            executor.spin()
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:
